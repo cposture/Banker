@@ -28,21 +28,36 @@ int  Process::getOwnNeed(void) const
 bool  Process::requestResource(int num, System &s)
 {
 	bool rtn = false;
-	HANDLE hMutex;
+	int res = 0;
+	HANDLE hThread = GetCurrentThread();
 
-	if(num < getMaxNeed() - getOwnNeed())
+	if(num <= getMaxNeed() - getOwnNeed())
 	{
-		hMutex = CreateSemaphore(NULL, 1, 1, NULL);
-		rtn = s.attainResource(num, &hMutex);
-		WaitForSingleObject(hMutex, INFINITE);
-
-		CloseHandle(hMutex);
+		res = s.attainResource(num,&hThread);
 		
-		if(rtn)
+		switch (res)
 		{
+		case 0:
 			setOwnNeed(getOwnNeed()+num);
+			rtn = true;
+			break;
+		case 1:
+			SuspendThread(hThread);
+			rtn = true;
+			break;
+		case 2:
+			rtn = false;
+			break;
 		}
 	}
 	return rtn;
+}
+
+bool Process::freeSource(int num, System &s)
+{
+	if(num <=0)
+		return false;
+	s.setAvailable(s.getAvailable()+num);
+	return true;
 }
 #endif

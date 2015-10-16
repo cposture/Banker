@@ -13,6 +13,7 @@ public:
 	int getMaxNeed(void) const;
 	int getOwnNeed(void) const;
 	bool requestResource(int num, System &s);
+	bool freeSource(int num, System &s);
 private:
 	int maxNeed;
 	int ownNeed;

@@ -22,30 +22,26 @@ int System::getAvailable(void) const
 	return available;
 }
 
-bool System::attainResource(int num,HANDLE *hMutex)
+int System::attainResource(int num,HANDLE *hThread)
 {
-	bool rtn = false;
+	int rtn = 0;
 
+	cout << "available" << getAvailable() << endl;
 	if(num <= getMaxAvailable())
 	{
-		rtn = true;
-		if(banker(num))
+		if(banker(num) && assignResource(num))
 		{
-			setAvailable(getAvailable() - num);
-			ReleaseSemaphore(*hMutex, 1, NULL);
-			cout << "banker success" << endl;
+			rtn = 0;
 		}
 		else
 		{
-			cout << "banker failure" << endl;
-			addList(num, hMutex);
+			addList(num, hThread);
+			rtn = 1;
 		}
 	}
 	else
 	{
-		cout << "banker failure" << endl;
-		ReleaseSemaphore(*hMutex, 1, NULL);
-		rtn = false;
+		rtn = 2;
 	}
 	return rtn;
 }
@@ -63,11 +59,14 @@ bool System::assignResource(int num)
 
 bool System::banker(int num)
 {
-	bool rtn;
+	bool rtn = true;
 	int available_bk = getAvailable();
 	ProcessList *list_head = getProcessListHead();
 	ProcessList *list_tail = getProcessListTail();
 	ProcessList *cur = list_head;
+
+	if(cur == NULL)
+		return true;
 
 	setAvailable(getAvailable() - num);
 	while(cur != NULL)

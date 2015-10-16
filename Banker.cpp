@@ -22,34 +22,39 @@ unsigned int __stdcall myThread(void *param)
 	int need = 0;
 	Param *pa = static_cast<Param*>(param);
 
+	srand(time(NULL));
 	while (need == 0)
 	{
 		need = rand()%MAX_AVAILABLE;
 	} 
 
 	Process pro(need);
+	
 	while(pro.getOwnNeed() < pro.getMaxNeed())
 	{
 		bool res = pro.requestResource(1,*(pa->system));
 
-		WaitForSingleObject(g_mutex, INFINITE);
-		std::cout << "Thread " << pa->uid << " start" << std::endl;
-		ReleaseSemaphore(g_mutex, 1, NULL);
-
 		if(res == true)
 		{
 			WaitForSingleObject(g_mutex, INFINITE);
-			std::cout << "Thread " << pa->uid  << "(" << pro.getMaxNeed() << ")" << ":" << pro.getOwnNeed() << " Success"<< std::endl;
+			std::cout << "Thread " << pa->uid  << "(" << pro.getMaxNeed() << ")" 
+			<< ":" << pro.getOwnNeed() << " Success"<< std::endl;
 			ReleaseSemaphore(g_mutex, 1, NULL);
 		}
 		else
 		{
 			WaitForSingleObject(g_mutex, INFINITE);
-			std::cout << "Thread " << pa->uid  << "(" << pro.getMaxNeed() << ")" << ":" << pro.getOwnNeed() << " Failure" << std::endl;
+			std::cout << "Thread " << pa->uid  << "(" << pro.getMaxNeed() << ")" 
+			<< ":" << pro.getOwnNeed() << " Failure" << std::endl;
 			ReleaseSemaphore(g_mutex, 1, NULL);
 		}
 	}
 
+	WaitForSingleObject(g_mutex, INFINITE);
+	std::cout << "Thread " << pa->uid  << "(" << pro.getMaxNeed() << ")" << "has request success! now free source" << std::endl;
+	ReleaseSemaphore(g_mutex, 1, NULL);
+
+	pro.freeSource(pro.getMaxNeed(), *(pa->system));
 	return 0;
 }
 
@@ -60,7 +65,6 @@ int main(int argc, char const *argv[])
 	Param par[MAX_THREAD];
 
 	g_mutex = CreateSemaphore(NULL, 1, 1, NULL);
-	srand(time(NULL));
 
 	WaitForSingleObject(g_mutex, INFINITE);
 	std::cout << "Banker start" << std::endl;

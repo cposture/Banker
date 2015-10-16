@@ -14,9 +14,9 @@ typedef struct ProcessList{
 
 class System{
 public:
-	System(int max=0, int num=0,ProcessList *head=NULL, ProcessList *tail = NULL){
+	System(int max=0, ProcessList *head=NULL, ProcessList *tail = NULL){
 		setMaxAvailable(max);
-		setAvailable(num);
+		setAvailable(max);
 		list_head = head;
 		list_tail = tail;
 	}
@@ -24,7 +24,7 @@ public:
 	void setAvailable(int num);
 	int getMaxAvailable(void) const;
 	int getAvailable(void) const;
-	bool attainResource(int num,HANDLE *hMutex);
+	int attainResource(int num,HANDLE *hThread);
 private:
 	int maxAvailable;
 	int available;
