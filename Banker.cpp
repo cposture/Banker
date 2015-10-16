@@ -7,7 +7,7 @@
 #include "Banker_System.h"
 
 #define MAX_THREAD 3
-#define MAX_AVAILABLE 20
+#define MAX_AVAILABLE 2000
 
 HANDLE g_mutex;
 
@@ -21,12 +21,16 @@ unsigned int __stdcall myThread(void *param)
 {
 	int need = 0;
 	Param *pa = static_cast<Param*>(param);
-
-	srand(time(NULL));
-	while (need == 0)
-	{
-		need = rand()%MAX_AVAILABLE;
-	} 
+ 	
+ 	srand(time(NULL));
+ 	while(need == 0)
+ 	{
+ 		need = rand()%MAX_THREAD;
+ 	}
+ 	
+	WaitForSingleObject(g_mutex, INFINITE);
+	std::cout << "Thread " << pa->uid << "start" << std::endl;
+	ReleaseSemaphore(g_mutex, 1, NULL);
 
 	Process pro(need);
 	
@@ -55,6 +59,7 @@ unsigned int __stdcall myThread(void *param)
 	ReleaseSemaphore(g_mutex, 1, NULL);
 
 	pro.freeSource(pro.getMaxNeed(), *(pa->system));
+
 	return 0;
 }
 
