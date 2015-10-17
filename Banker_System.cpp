@@ -26,7 +26,6 @@ int System::attainResource(int num,HANDLE *hThread)
 {
 	int rtn = 0;
 
-	cout << "available" << getAvailable() << endl;
 	if(num <= getMaxAvailable())
 	{
 		if(banker(num) && assignResource(num))

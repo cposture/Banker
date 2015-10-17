@@ -25,7 +25,7 @@ unsigned int __stdcall myThread(void *param)
  	srand(time(NULL));
  	while(need == 0)
  	{
- 		need = rand()%MAX_THREAD;
+ 		need = rand()%MAX_AVAILABLE;
  	}
  	
 	WaitForSingleObject(g_mutex, INFINITE);
@@ -36,22 +36,22 @@ unsigned int __stdcall myThread(void *param)
 	
 	while(pro.getOwnNeed() < pro.getMaxNeed())
 	{
-		bool res = pro.requestResource(1,*(pa->system));
+		bool res = pro.requestResource(rand()%need,*(pa->system));
 
+		WaitForSingleObject(g_mutex, INFINITE);
 		if(res == true)
 		{
-			WaitForSingleObject(g_mutex, INFINITE);
-			std::cout << "Thread " << pa->uid  << "(" << pro.getMaxNeed() << ")" 
-			<< ":" << pro.getOwnNeed() << " Success"<< std::endl;
-			ReleaseSemaphore(g_mutex, 1, NULL);
+			std::cout << "system" << "\t" << pa->system->getAvailable() << std::endl;
+			std::cout << "Thread " << pa->uid  << "\t" << pro.getMaxNeed() << "\t" 
+			 	<< pro.getOwnNeed() << std::endl;
 		}
 		else
 		{
-			WaitForSingleObject(g_mutex, INFINITE);
 			std::cout << "Thread " << pa->uid  << "(" << pro.getMaxNeed() << ")" 
 			<< ":" << pro.getOwnNeed() << " Failure" << std::endl;
-			ReleaseSemaphore(g_mutex, 1, NULL);
+			
 		}
+		ReleaseSemaphore(g_mutex, 1, NULL);
 	}
 
 	WaitForSingleObject(g_mutex, INFINITE);
