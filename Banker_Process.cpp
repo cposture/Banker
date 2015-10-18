@@ -4,56 +4,67 @@
 #include "Banker_Process.h"
 #include "Banker_System.h"
 #include <Windows.h>
+#include <iostream>
 
-void Process::setMaxNeed(int max)
+using namespace std;
+
+extern HANDLE g_mutex;
+
+void Process::setMaxNeed(unsigned int max)
 {
 	maxNeed = max > 0 ? max:0;
 }
 
-void  Process::setOwnNeed(int own)
+void  Process::setOwnNeed(unsigned int own)
 {
 	ownNeed = own > 0 ? own:0;
 }
 
-int  Process::getMaxNeed(void) const
+unsigned int  Process::getMaxNeed(void) const
 {
 	return maxNeed;
 }
 
-int  Process::getOwnNeed(void) const
+unsigned int  Process::getOwnNeed(void) const
 {
 	return ownNeed;
 }
 
-bool  Process::requestResource(int num, System &s)
+bool  Process::requestResource(unsigned int num, System &s)
 {
 	bool rtn = false;
 	int res = 0;
-	HANDLE hThread = GetCurrentThread();
+	HANDLE hPseudoThread = GetCurrentThread();
+	HANDLE hProcess = GetCurrentProcess();
+	HANDLE hRealThread=NULL;
 
 	if(num <= getMaxNeed() - getOwnNeed())
 	{
-		res = s.attainResource(num,&hThread);
+		DuplicateHandle(hProcess, hPseudoThread, hProcess, &hRealThread, 0, false, 0);
+		res = s.attainResource(num,&hRealThread);
 		
 		switch (res)
 		{
 		case 0:
+			WaitForSingleObject(g_mutex, INFINITE);
+			cout << "Succ" << endl;
+			ReleaseSemaphore(g_mutex, 1, NULL);
 			setOwnNeed(getOwnNeed()+num);
 			rtn = true;
 			break;
 		case 1:
-			SuspendThread(hThread);
+			WaitForSingleObject(g_mutex, INFINITE);
+			cout << "Fail" << endl;
+			ReleaseSemaphore(g_mutex, 1, NULL);
+			SuspendThread(hPseudoThread);
 			rtn = true;
-			break;
-		case 2:
-			rtn = false;
 			break;
 		}
 	}
 	return rtn;
 }
 
-bool Process::freeSource(int num, System &s)
+bool Process::freeSource(unsigned int num, System &s)
 {
 	if(num <=0)
 		return false;

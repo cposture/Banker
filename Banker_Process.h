@@ -3,19 +3,19 @@
 
 class Process{
 public:
-	Process(int max=0,int own=0)
+	Process(unsigned int max=0,unsigned int own=0)
 	{
 		setMaxNeed(max);
 		setOwnNeed(own);
 	}
-	void setMaxNeed(int max);
-	void setOwnNeed(int own);
-	int getMaxNeed(void) const;
-	int getOwnNeed(void) const;
-	bool requestResource(int num, System &s);
-	bool freeSource(int num, System &s);
+	void setMaxNeed(unsigned int max);
+	void setOwnNeed(unsigned int own);
+	unsigned int getMaxNeed(void) const;
+	unsigned int getOwnNeed(void) const;
+	bool requestResource(unsigned int num, System &s);
+	bool freeSource(unsigned int num, System &s);
 private:
-	int maxNeed;
-	int ownNeed;
+	unsigned int maxNeed;
+	unsigned int ownNeed;
 };
 

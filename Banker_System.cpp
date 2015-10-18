@@ -2,50 +2,42 @@
 #include <iostream>
 
 using namespace std;
-void System::setMaxAvailable(int max)
+void System::setMaxAvailable(unsigned int max)
 {
 	maxAvailable = max > 0 ? max : 0;
 }
 
-void System::setAvailable(int num)
+void System::setAvailable(unsigned int num)
 {
 	available = num > 0 ? num : 0;
 }
 
-int System::getMaxAvailable(void) const
+unsigned int System::getMaxAvailable(void) const
 {
 	return maxAvailable;
 }
 
-int System::getAvailable(void) const
+unsigned int System::getAvailable(void) const
 {
 	return available;
 }
 
-int System::attainResource(int num,HANDLE *hThread)
+unsigned int System::attainResource(unsigned int num,HANDLE *hThread)
 {
 	int rtn = 0;
 
-	if(num <= getMaxAvailable())
+	if(num <= getAvailable() && banker(num) && assignResource(num))
 	{
-		if(banker(num) && assignResource(num))
-		{
-			rtn = 0;
-		}
-		else
-		{
-			addList(num, hThread);
-			rtn = 1;
-		}
+		rtn = 0;
 	}
 	else
 	{
-		rtn = 2;
+		rtn = 1;
 	}
 	return rtn;
 }
 
-bool System::assignResource(int num)
+bool System::assignResource(unsigned int num)
 {
 	bool rtn = false;
 	if(num <= getAvailable())
@@ -56,10 +48,10 @@ bool System::assignResource(int num)
 	return rtn;
 }
 
-bool System::banker(int num)
+bool System::banker(unsigned int num)
 {
 	bool rtn = true;
-	int available_bk = getAvailable();
+	unsigned int available_bk = getAvailable();
 	ProcessList *list_head = getProcessListHead();
 	ProcessList *list_tail = getProcessListTail();
 	ProcessList *cur = list_head;
@@ -105,7 +97,7 @@ bool System::banker(int num)
 	return rtn;
 }
 
-bool System::addList(int num, HANDLE *hMutex)
+bool System::addList(unsigned int num, HANDLE *hMutex)
 {
 	struct ProcessList *node = new struct ProcessList();
 	node->need = num;

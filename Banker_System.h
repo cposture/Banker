@@ -6,7 +6,7 @@
 class Process;
 
 typedef struct ProcessList{
-	int need;
+	unsigned int need;
 	HANDLE *hMutex;
 	bool finish;
 	ProcessList *next;
@@ -14,26 +14,26 @@ typedef struct ProcessList{
 
 class System{
 public:
-	System(int max=0, ProcessList *head=NULL, ProcessList *tail = NULL){
+	System(unsigned int max=0, ProcessList *head=NULL, ProcessList *tail = NULL){
 		setMaxAvailable(max);
 		setAvailable(max);
 		list_head = head;
 		list_tail = tail;
 	}
-	void setMaxAvailable(int max);
-	void setAvailable(int num);
-	int getMaxAvailable(void) const;
-	int getAvailable(void) const;
-	int attainResource(int num,HANDLE *hThread);
+	void setMaxAvailable(unsigned int max);
+	void setAvailable(unsigned int num);
+	unsigned int getMaxAvailable(void) const;
+	unsigned int getAvailable(void) const;
+	unsigned int attainResource(unsigned int num,HANDLE *hThread);
 private:
-	int maxAvailable;
-	int available;
+	unsigned int maxAvailable;
+	unsigned int available;
 	ProcessList *list_head;
 	ProcessList *list_tail;
 
-	bool assignResource(int num);
-	bool banker(int num);
-	bool addList(int num, HANDLE *hMutex);
+	bool assignResource(unsigned int num);
+	bool banker(unsigned int num);
+	bool addList(unsigned int num, HANDLE *hMutex);
 	ProcessList *getProcessListHead(void) const;
 	ProcessList *getProcessListTail(void) const;
 	ProcessList *getProcessListNext(ProcessList *cur);

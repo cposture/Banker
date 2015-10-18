@@ -1,8 +1,7 @@
 #include <Windows.h>
 #include <process.h>
-#include <cstdlib>
-#include <ctime>
 #include <iostream>
+#include <cstdlib>
 #include "Banker_Process.h"
 #include "Banker_System.h"
 
@@ -19,14 +18,14 @@ typedef struct Param
 
 unsigned int __stdcall myThread(void *param)
 {
-	int need = 0;
+	unsigned int need = GetCurrentThreadId();
 	Param *pa = static_cast<Param*>(param);
  	
- 	srand(time(NULL));
- 	while(need == 0)
+ 	srand(need);
+ 	do
  	{
- 		need = rand()%MAX_AVAILABLE;
- 	}
+ 		need = rand() % MAX_AVAILABLE;
+ 	}while(need == 0);
  	
 	WaitForSingleObject(g_mutex, INFINITE);
 	std::cout << "Thread " << pa->uid << "start" << std::endl;
@@ -36,19 +35,32 @@ unsigned int __stdcall myThread(void *param)
 	
 	while(pro.getOwnNeed() < pro.getMaxNeed())
 	{
-		bool res = pro.requestResource(rand()%need,*(pa->system));
+		unsigned int resource = 0;
+
+		do{
+			if(pro.getMaxNeed() - pro.getOwnNeed() > 1)
+				resource = rand()% (pro.getMaxNeed() - pro.getOwnNeed());
+			else
+				resource = 1;
+		}while(resource == 0);
+
+		WaitForSingleObject(g_mutex, INFINITE);
+		std::cout << "Thread " << pa->uid  << "<<<\t" << resource << std::endl;
+		ReleaseSemaphore(g_mutex, 1, NULL);
+
+		bool res = pro.requestResource(resource,*(pa->system));
 
 		WaitForSingleObject(g_mutex, INFINITE);
 		if(res == true)
 		{
 			std::cout << "system" << "\t" << pa->system->getAvailable() << std::endl;
 			std::cout << "Thread " << pa->uid  << "\t" << pro.getMaxNeed() << "\t" 
-			 	<< pro.getOwnNeed() << std::endl;
+			 	<< pro.getOwnNeed() << "\t" << resource << "\t" << " Success" << std::endl;
 		}
 		else
 		{
-			std::cout << "Thread " << pa->uid  << "(" << pro.getMaxNeed() << ")" 
-			<< ":" << pro.getOwnNeed() << " Failure" << std::endl;
+			std::cout << "Thread "  << pa->uid  << "\t" << pro.getMaxNeed() << "\t" 
+				<< pro.getOwnNeed() << "\t" << resource << "\t" << " Failure" << std::endl;
 			
 		}
 		ReleaseSemaphore(g_mutex, 1, NULL);
