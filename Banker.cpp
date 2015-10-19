@@ -5,10 +5,11 @@
 #include "Banker_Process.h"
 #include "Banker_System.h"
 
-#define MAX_THREAD 3
-#define MAX_AVAILABLE 2000
+#define MAX_THREAD 64
+#define MAX_AVAILABLE 200000
 
 HANDLE g_mutex;
+HANDLE g_mutex2;
 
 typedef struct Param
 {
@@ -47,7 +48,9 @@ unsigned int __stdcall myThread(void *param)
 		std::cout << "Thread " << pa->uid  << "<<<\t" << resource << std::endl;
 		ReleaseSemaphore(g_mutex, 1, NULL);
 
+		//WaitForSingleObject(g_mutex2, INFINITE);
 		bool res = pro.requestResource(resource,*(pa->system));
+		//ReleaseSemaphore(g_mutex2, 1, NULL);
 
 		WaitForSingleObject(g_mutex, INFINITE);
 		if(res == true)
@@ -70,7 +73,9 @@ unsigned int __stdcall myThread(void *param)
 	std::cout << "Thread " << pa->uid  << "(" << pro.getMaxNeed() << ")" << "has request success! now free source" << std::endl;
 	ReleaseSemaphore(g_mutex, 1, NULL);
 
+	//WaitForSingleObject(g_mutex2, INFINITE);
 	pro.freeSource(*(pa->system));
+	//ReleaseSemaphore(g_mutex2, 1, NULL);
 
 	return 0;
 }
@@ -82,6 +87,7 @@ int main(int argc, char const *argv[])
 	Param par[MAX_THREAD];
 
 	g_mutex = CreateSemaphore(NULL, 1, 1, NULL);
+	g_mutex2 = CreateSemaphore(NULL, 1, 1, NULL);
 
 	WaitForSingleObject(g_mutex, INFINITE);
 	std::cout << "Banker start" << std::endl;

@@ -1,10 +1,10 @@
 #include "Banker_System.h"
 #include "Banker_Process.h"
-#include <iostream>
+//#include <iostream>
 
-using namespace std;
+//using namespace std;
 
-extern HANDLE g_mutex;
+//extern HANDLE g_mutex;
 void System::setMaxAvailable(unsigned int max)
 {
 	maxAvailable = max > 0 ? max : 0;
@@ -62,16 +62,21 @@ bool System::banker(unsigned int num)
 	bool rtn;
 	unsigned int available_bk = getAvailable();
 
-	for(auto i = processList.begin(); i != processList.end(); ++i)
+	for(auto i = processList.begin(); i != processList.end(); )
 	{
-		WaitForSingleObject(g_mutex, INFINITE);
-		cout << "=== " << boolalpha << (*i)->isFinish() <<endl;
-		ReleaseSemaphore(g_mutex, 1, NULL);
+		//WaitForSingleObject(g_mutex, INFINITE);
+		//cout << "--=== " << boolalpha << (*i)->isFinish() <<endl;
+		//ReleaseSemaphore(g_mutex, 1, NULL);
 		if(false == (*i)->isFinish() && (*i)->getMaxNeed() - (*i)->getOwnNeed() <= getAvailable())
 		{
+			//cout << "++==  " << (*i)->getMaxNeed() << endl;
 			(*i)->setFinish(true);
 			setAvailable(getAvailable()+(*i)->getOwnNeed());
 			i = processList.begin();
+		}
+		else
+		{
+			++i;
 		}
 	}
 	rtn = true;
