@@ -1,7 +1,10 @@
 #include "Banker_System.h"
+#include "Banker_Process.h"
 #include <iostream>
 
 using namespace std;
+
+extern HANDLE g_mutex;
 void System::setMaxAvailable(unsigned int max)
 {
 	maxAvailable = max > 0 ? max : 0;
@@ -22,13 +25,30 @@ unsigned int System::getAvailable(void) const
 	return available;
 }
 
-unsigned int System::attainResource(unsigned int num,HANDLE *hThread)
+unsigned int System::attainResource(Process *process)
 {
 	int rtn = 0;
+	unsigned int requestNum = process->getRequestNeed();
+	unsigned int available_bk = getAvailable();
+	unsigned int ownNeed_bk = process->getOwnNeed();
 
-	if(num <= getAvailable() && banker(num) && assignResource(num))
+
+	if(requestNum <= getAvailable())
 	{
-		rtn = 0;
+		setAvailable(getAvailable() - requestNum);
+		process->setOwnNeed(process->getOwnNeed() + requestNum);
+
+		if(banker(requestNum))
+		{
+			processList.insert(process);
+			rtn = 0;
+		}
+		else
+		{
+			setAvailable(available_bk);
+			process->setOwnNeed(ownNeed_bk);
+			rtn = 1;
+		}
 	}
 	else
 	{
@@ -37,112 +57,40 @@ unsigned int System::attainResource(unsigned int num,HANDLE *hThread)
 	return rtn;
 }
 
-bool System::assignResource(unsigned int num)
-{
-	bool rtn = false;
-	if(num <= getAvailable())
-	{
-		rtn = true;
-		setAvailable(getAvailable() - num);
-	}
-	return rtn;
-}
-
 bool System::banker(unsigned int num)
 {
-	bool rtn = true;
+	bool rtn;
 	unsigned int available_bk = getAvailable();
-	ProcessList *list_head = getProcessListHead();
-	ProcessList *list_tail = getProcessListTail();
-	ProcessList *cur = list_head;
 
-	if(cur == NULL)
-		return true;
-
-	setAvailable(getAvailable() - num);
-	while(cur != NULL)
+	for(auto i = processList.begin(); i != processList.end(); ++i)
 	{
-		if(cur->finish = false && cur->need <= getAvailable())
+		WaitForSingleObject(g_mutex, INFINITE);
+		cout << "=== " << boolalpha << (*i)->isFinish() <<endl;
+		ReleaseSemaphore(g_mutex, 1, NULL);
+		if(false == (*i)->isFinish() && (*i)->getMaxNeed() - (*i)->getOwnNeed() <= getAvailable())
 		{
-			cur->finish = true;
-			setAvailable(getAvailable()+cur->need);
-			cur = list_head;
-			continue;
+			(*i)->setFinish(true);
+			setAvailable(getAvailable()+(*i)->getOwnNeed());
+			i = processList.begin();
 		}
-
-		if(cur == list_tail)
-		{
-			if(cur->finish == false)
-			{
-				rtn = false;
-				break;
-			}
-			else
-			{
-				rtn = true;
-				break;
-			}
-			
-		}
-		cur = getProcessListNext(cur);
 	}
-
-	cur = list_head;
-	while(cur != NULL)
+	rtn = true;
+	for(auto i = processList.begin(); i != processList.end(); ++i)
 	{
-		cur->finish = false;
-		cur = getProcessListNext(cur);
-	}	
+		if((*i)->isFinish() == false)
+			rtn = false;
+		(*i)->setFinish(false);
+	}
 	setAvailable(available_bk);
 	return rtn;
 }
 
-bool System::addList(unsigned int num, HANDLE *hMutex)
+
+bool System::freeResource(Process *process)
 {
-	struct ProcessList *node = new struct ProcessList();
-	node->need = num;
-	node->hMutex = hMutex;
-	node->finish = false;
-	node->next = NULL;
-
-	ProcessList *head = getProcessListHead();
-	if(head == NULL)
-	{
-		setProcessListHead(node);
-		setProcessListTail(node);
-	}
-	else
-	{
-		setProcessListHead(node);
-		node->next = head;
-	}
-
+	if(processList.find(process) == processList.end())
+		return false;
+	setAvailable(getAvailable() + process->getOwnNeed());
+	processList.erase(process);
 	return true;
-}
-
-ProcessList *System::getProcessListHead(void) const
-{
-	return list_head;
-}
-
-ProcessList *System::getProcessListTail(void) const
-{
-	return list_tail;
-}
-
-ProcessList *System::getProcessListNext(ProcessList *cur)
-{
-	if (cur == NULL)
-		return NULL;
-	return cur->next;
-}
-
-void System::setProcessListHead(ProcessList *head)
-{
-	list_head = head;
-}
-
-void System::setProcessListTail(ProcessList *tail)
-{
-	list_tail = tail;
 }

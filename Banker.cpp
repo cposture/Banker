@@ -22,8 +22,7 @@ unsigned int __stdcall myThread(void *param)
 	Param *pa = static_cast<Param*>(param);
  	
  	srand(need);
- 	do
- 	{
+ 	do{
  		need = rand() % MAX_AVAILABLE;
  	}while(need == 0);
  	
@@ -59,6 +58,7 @@ unsigned int __stdcall myThread(void *param)
 		}
 		else
 		{
+			std::cout << "system" << "\t" << pa->system->getAvailable() << std::endl;
 			std::cout << "Thread "  << pa->uid  << "\t" << pro.getMaxNeed() << "\t" 
 				<< pro.getOwnNeed() << "\t" << resource << "\t" << " Failure" << std::endl;
 			
@@ -70,7 +70,7 @@ unsigned int __stdcall myThread(void *param)
 	std::cout << "Thread " << pa->uid  << "(" << pro.getMaxNeed() << ")" << "has request success! now free source" << std::endl;
 	ReleaseSemaphore(g_mutex, 1, NULL);
 
-	pro.freeSource(pro.getMaxNeed(), *(pa->system));
+	pro.freeSource(*(pa->system));
 
 	return 0;
 }
