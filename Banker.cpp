@@ -2,14 +2,12 @@
 #include <process.h>
 #include <iostream>
 #include <cstdlib>
+#include <string>
 #include "Banker_Process.h"
 #include "Banker_System.h"
 
 #define MAX_THREAD 64
 #define MAX_AVAILABLE 200000
-
-HANDLE g_mutex;
-HANDLE g_mutex2;
 
 typedef struct Param
 {
@@ -21,17 +19,13 @@ unsigned int __stdcall myThread(void *param)
 {
 	unsigned int need = GetCurrentThreadId();
 	Param *pa = static_cast<Param*>(param);
- 	
+
  	srand(need);
  	do{
  		need = rand() % MAX_AVAILABLE;
  	}while(need == 0);
- 	
-	WaitForSingleObject(g_mutex, INFINITE);
-	std::cout << "Thread " << pa->uid << "start" << std::endl;
-	ReleaseSemaphore(g_mutex, 1, NULL);
 
-	Process pro(need);
+	Process pro(need,0,pa->uid);
 	
 	while(pro.getOwnNeed() < pro.getMaxNeed())
 	{
@@ -44,39 +38,14 @@ unsigned int __stdcall myThread(void *param)
 				resource = 1;
 		}while(resource == 0);
 
-		WaitForSingleObject(g_mutex, INFINITE);
-		std::cout << "Thread " << pa->uid  << "<<<\t" << resource << std::endl;
-		ReleaseSemaphore(g_mutex, 1, NULL);
-
-		//WaitForSingleObject(g_mutex2, INFINITE);
 		bool res = pro.requestResource(resource,*(pa->system));
-		//ReleaseSemaphore(g_mutex2, 1, NULL);
-
-		WaitForSingleObject(g_mutex, INFINITE);
-		if(res == true)
-		{
-			std::cout << "system" << "\t" << pa->system->getAvailable() << std::endl;
-			std::cout << "Thread " << pa->uid  << "\t" << pro.getMaxNeed() << "\t" 
-			 	<< pro.getOwnNeed() << "\t" << resource << "\t" << " Success" << std::endl;
-		}
-		else
-		{
-			std::cout << "system" << "\t" << pa->system->getAvailable() << std::endl;
-			std::cout << "Thread "  << pa->uid  << "\t" << pro.getMaxNeed() << "\t" 
-				<< pro.getOwnNeed() << "\t" << resource << "\t" << " Failure" << std::endl;
-			
-		}
-		ReleaseSemaphore(g_mutex, 1, NULL);
 	}
 
-	WaitForSingleObject(g_mutex, INFINITE);
-	std::cout << "Thread " << pa->uid  << "(" << pro.getMaxNeed() << ")" << "has request success! now free source" << std::endl;
-	ReleaseSemaphore(g_mutex, 1, NULL);
+	std::string prompt;
+	prompt = prompt +  "\n~~~~~~Thread\t" + std::to_string(pa->uid) + "(" + std::to_string(pro.getMaxNeed()) + ")" + " has request success! now free source\n";
+	std::cout << prompt;
 
-	//WaitForSingleObject(g_mutex2, INFINITE);
 	pro.freeSource(*(pa->system));
-	//ReleaseSemaphore(g_mutex2, 1, NULL);
-
 	return 0;
 }
 
@@ -85,13 +54,6 @@ int main(int argc, char const *argv[])
 	HANDLE hThread[MAX_THREAD];
 	System s(MAX_AVAILABLE);
 	Param par[MAX_THREAD];
-
-	g_mutex = CreateSemaphore(NULL, 1, 1, NULL);
-	g_mutex2 = CreateSemaphore(NULL, 1, 1, NULL);
-
-	WaitForSingleObject(g_mutex, INFINITE);
-	std::cout << "Banker start" << std::endl;
-	ReleaseSemaphore(g_mutex, 1, NULL);
 
 	for(int i=0; i < MAX_THREAD; ++i)
 	{

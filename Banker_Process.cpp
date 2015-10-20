@@ -40,10 +40,21 @@ void Process::setFinish(bool f)
 	finish = f;
 }
 
+void Process::setUid(unsigned int u)
+{
+	uid = u;
+}
+
+unsigned int Process::getUid(void)
+{
+	return uid;
+}
+
 unsigned int Process::getRequestNeed(void)
 {
 	return requestNeed;
 }
+
 bool Process::setRequestNeed(unsigned int r)
 {
 	bool rtn = false;
@@ -73,15 +84,9 @@ bool  Process::requestResource(unsigned int num, System &s)
 		switch (res)
 		{
 		case 0:
-			WaitForSingleObject(g_mutex, INFINITE);
-			cout << "Succ" << endl;
-			ReleaseSemaphore(g_mutex, 1, NULL);
 			rtn = true;
 			break;
 		case 1:
-			WaitForSingleObject(g_mutex, INFINITE);
-			cout << "Fail" << endl;
-			ReleaseSemaphore(g_mutex, 1, NULL);
 			rtn = false;
 			break;
 		}
